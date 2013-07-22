@@ -159,3 +159,35 @@ function bartik_preprocess_comment_wrapper(&$variables) {
   $variables['disclaimer'] = t('Commments are umoderated. The views expressed
     are those of the comment author');
 }
+
+/**
+ * Returns HTML for a marker for required form elements.
+ *
+ * @param $variables
+ *   An associative array containing:
+ *   - element: An associative array containing the properties of the element.
+ *
+ * @ingroup themeable
+ */
+function bartik_form_required_marker($variables) {
+  // This is also used in the installer, pre-database setup.
+  $t = get_t();
+  $attributes = array(
+    'class' => 'form-required',
+    'title' => $t('This field cannot be left blank.'),
+  );
+  return '<span' . drupal_attributes($attributes) . '>!</span>';
+}
+
+/**
+ * With this funtion we convert the default drupal form builder for user
+ * registration into a theme template.
+ */
+function bartik_theme() {
+  return array(
+    'user_register_form' => array(
+      'template' => 'user-register-form',
+      'render element' => 'form',  
+    ), 
+  );
+}
