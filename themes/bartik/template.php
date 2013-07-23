@@ -161,13 +161,7 @@ function bartik_preprocess_comment_wrapper(&$variables) {
 }
 
 /**
- * Returns HTML for a marker for required form elements.
- *
- * @param $variables
- *   An associative array containing:
- *   - element: An associative array containing the properties of the element.
- *
- * @ingroup themeable
+ * Override of the theme_form_required_marker theme hook.
  */
 function bartik_form_required_marker($variables) {
   // This is also used in the installer, pre-database setup.
@@ -180,14 +174,34 @@ function bartik_form_required_marker($variables) {
 }
 
 /**
- * With this funtion we convert the default drupal form builder for user
- * registration into a theme template.
+ * With this funtion we tell Drupal to use a dedicated theme template when
+ * rendering the user registration form.
  */
 function bartik_theme() {
   return array(
     'user_register_form' => array(
+      'path' => 'themes/bartik/templates',
       'template' => 'user-register-form',
       'render element' => 'form',  
     ), 
   );
+}
+
+ 
+function bartik_form_alter(&$form, $form_state, $form_id) {
+  // Change the user login form:
+  if ($form_id == 'user_login') {
+    // Change the text below the username field to 'Enter your username'
+    $form['name']['#description'] = t('Enter your username.');
+    // Change the text on the submit button to 'Let me in'
+    $form['actions']['submit']['#value'] = t('Let me in');
+  }
+  // Change the request pass form:
+  elseif ($form_id == 'user_pass') {
+    // Change the data label to add basic information to form
+    $form['name']['#title'] = t('Enter your username or email adress, then
+                                click the request password button.');
+    // Change the text on the submit button to 'Request password'
+    $form['actions']['submit']['#value'] = t('Request password');
+  }
 }

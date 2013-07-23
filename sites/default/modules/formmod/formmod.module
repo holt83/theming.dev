@@ -1,0 +1,27 @@
+<?php
+
+/**
+ * @file
+ * Defines a module that add modifications to the site forms.
+ */
+
+/**
+ * Implements hook_form_alter().
+ */
+function formmod_form_alter(&$form, $form_state, $form_id) {
+  // Change the user login form:
+  if ($form_id == 'user_login') {
+    // Change the text below the username field to 'Enter your username'
+    $form['name']['#description'] = t('Enter your username.');
+    // Change the text on the submit button to 'Let me in'
+    $form['actions']['submit']['#value'] = t('Let me in');
+  }
+  // Change the request pass form:
+  elseif ($form_id == 'user_pass') {
+    // Change the data label to add basic information to form
+    $form['name']['#title'] = t('Enter your username or email adress, then
+                                click the request password button.');
+    // Change the text on the submit button to 'Request password'
+    $form['actions']['submit']['#value'] = t('Request password');
+  }
+}
