@@ -1,0 +1,8 @@
+name = Multiply/Divide Operations
+description = Module provides operations Multiply and Divide.
+core = 7.x
+package = Examples
+dependencies[] = calculation_plugins
+files[] = multiply_divide.module
+files[] = calculation_plugins_multiply_operation.inc
+files[] = calculation_plugins_divide_operation.inc

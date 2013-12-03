@@ -1,0 +1,21 @@
+<?php
+
+/**
+ * Implements hook_calculation_plugins_operation (hook_MODULE_PLUGIN-TYPE)
+ */
+function multiply_divide_calculation_plugins_operation() {
+  return array(
+    'multiply' => array(
+      'label' => t('Multiply'),
+      'handler' => array(
+        'class' => 'calculation_plugins_multiply_operation',  
+      ),  
+    ),
+    'divide' => array(
+      'label' => t('Divide'),
+      'handler' => array(
+        'class' => 'calculation_plugins_divide_operation',
+      ),
+    ),  
+  );
+}

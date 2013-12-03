@@ -1,0 +1,7 @@
+name = Sum Operation
+description = Module provides operation Sum.
+core = 7.x
+package = Examples
+dependencies[] = calculation_plugins
+files[] = sum.module
+files[] = plugins/operation/example_sum_operation.inc

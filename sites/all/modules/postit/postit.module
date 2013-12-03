@@ -1,0 +1,343 @@
+<?php
+
+/**
+ * @file
+ * 
+ * Provides an example of creation of a custom entity using the entity module.
+ */
+
+/**
+ * Implements hook_entity_info().
+ */
+function postit_entity_info() {
+  $entity_info['postit'] = array(
+    'label' => t('Postit Note'),
+    'entity class' => 'PostIt',
+    'controller class' => 'PostItController',
+    'base table' => 'postit',
+    'fieldable' => TRUE,
+    'entity keys' => array(
+      'id' => 'pid',
+    ),
+    'static cache' => TRUE,
+    'bundles' => array(
+      'postit' => array(
+        'label' => 'PostIt',
+        // This admin UI will take care of managing fields on the postit entity. 
+        'admin' => array(
+          'path' => 'admin/structure/postit/manage',
+          'access arguments' => array('administer postits'),
+        ),
+      ),
+    ),
+    'label callback' => 'entity_class_label',
+    'uri callback' => 'entity_class_uri',
+    'creation callback' => 'postit_create',
+    'access callback' => 'postit_access',
+    'module' => 'postit',
+    // This admin UI wil take care of CRUD operations on postits.
+    'admin ui' => array(
+      'path' => 'admin/content/postit',
+      'file' => 'postit.admin.inc',
+      'controller class' => 'PostItUIController',
+      'menu wildcard' => '%postit',
+    ),
+  );
+  return $entity_info;
+}
+
+/**
+ * Implements hook_menu().
+ * 
+ * The UIController specified in hook_entity_info() takes care of setting up an
+ * admin UI for CRUD operations on postits. For managing fields on the postit
+ * and for viewing a single postit, we have to rely on the CORE API.
+ *  
+ */
+function postit_menu() {
+  $items['admin/structure/postit/manage'] = array(
+    'title' => 'Postit Admin',
+    'description' => t('Manage Postit structure.'),
+    'page callback' => 'postit_info',
+    'access arguments' => array('administer postits'),
+  );
+  $items['postit/%postit'] = array(
+    'page callback' => 'postit_page_view',
+    'page arguments' => array(1),
+    'access arguments' => array('view postits'),
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/**
+ * Page callback for the
+ */
+function postit_info() {
+  return t('Welcome to the administration page for your Postits!');
+}
+
+
+/**
+ * Implements hook_permission().
+ */
+function postit_permission() {
+  return array(
+    'administer postits' => array(
+      'title' => t('Administer Postits'),
+      'restrict access' => TRUE,  
+    ),
+    'view postits' => array(
+      'title' => t('View PostIts'),
+    ),
+    'create postits' => array(
+      'title' => t('Create PostIts'),
+    ),
+    'update postits' => array(
+      'title' => t('Edit PostIts'),
+    ),
+    'delete postits' => array(
+      'title' => t('Delete PostIts'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_extra_fields().
+ * 
+ * We implement this hook to have our internal 'note' field displayed on the
+ * field management UI.
+ */
+function postit_field_extra_fields() {
+  $return = array();
+  $return['postit']['postit'] = array(
+    'form' => array(
+      'note' => array(
+        'label' => t('Note'),
+        'description' => t('Postit Note'),
+        'weight' => 0,
+      ),
+    ),
+  );
+  return $return;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function postit_theme() {
+  return array(
+    'postit' => array(
+      'render element' => 'elements',
+      'template' => 'postit',
+    ),
+  );
+}
+
+/**
+ * Determines whether the given user has access to a postit note.
+ * 
+ * @param $op
+ *   The operation being performed. One of 'view', 'update', 'create', 'delete'
+ *   or just 'edit' (being the same as 'create' or 'update').
+ * @param $postit
+ *   Optionally a postit. If nothing is given, access for all postits is 
+ *   determined. 
+ * @param $account
+ *   The user to check for. Leave it to NULL to check for the global user.
+ */
+function postit_access($op, $postit = NULL, $account = NULL) {
+  if (user_access('administer postits', $account)) {
+    return TRUE;
+  }
+  if (in_array($op, array('update', 'create', 'delete'))) {
+    if (user_access($op . ' postits', $account)) {
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+/**
+ * Fetch a postit object from the database. 
+ * 
+ * Note that the wildcard specified in hook_entity_info() much match the prefix
+ * for this function for Drupal to pick it up.
+ *
+ * @param $pid
+ *   Integer specifying the postit id.
+ * @param $reset
+ *   A boolean indicating that the internal cache should be reset.
+ * @return
+ *   A fully-loaded $postit object or FALSE if it cannot be loaded.
+ *
+ * @see model_load_multiple()
+ */
+function postit_load($pid = NULL, $reset = FALSE) {
+  $pids = (isset($pid) ? array($pid) : array());
+  $postit = postit_load_multiple($pids, array(), $reset);
+  return $postit ? reset($postit) : FALSE;
+}
+ 
+/**
+ * Load multiple postits based on certain conditions.
+ *
+ * @param $pids
+ *   An array of postit IDs.
+ * @param $conditions
+ *   An array of conditions to match against the {postit} table.
+ * @param $reset
+ *   A boolean indicating that the internal cache should be reset.
+ * @return
+ *   An array of postit objects, indexed by pid.
+ *
+ * @see entity_load()
+ * @see model_load()
+ */
+function postit_load_multiple($pids = array(), $conditions = array(), $reset = FALSE) {
+  return entity_load('postit', $pids, $conditions, $reset);
+}
+
+/**
+ * Delete a postit
+ */
+function postit_delete(PostIt $postit) {
+  $postit->delete();
+}
+
+/**
+ * Delete multiple postits.
+ * 
+ * @param $pids
+ *   An array of postit IDs.
+ */
+function postit_delete_multiple($pids = array()) {
+  entity_get_controller('postit')->delete($pids);
+}
+
+/**
+ * Create and return a postit object.
+ */
+function postit_create($values = array()) {
+  return entity_get_controller('postit')->create($values);
+}
+
+/**
+ * Saves a postit to the database.
+ * 
+ * @param $postit
+ *   The postit object.
+ */
+function postit_save(PostIt $postit) {
+  return entity_get_controller('postit')->save($postit);
+}
+
+/**
+ * Page callback
+ */
+function postit_page_view($postit, $view_mode = 'full') {
+  $controller = entity_get_controller('postit'); 
+  $content = $controller->view(array($postit->pid => $postit));
+  return $content;
+}
+
+/**
+ * The class used for postit entities.
+ */
+class PostIt extends Entity {
+  
+  public function __construct($values = array()) {
+    parent::__construct($values, 'postit');
+  }
+  
+  /**
+   * Specifies the default label, which is picked up by label() by default.
+   */
+  protected function defaultLabel() {
+    return 'PostIt Note with ID: ' . $this->pid;
+  }
+
+  /**
+   * Specifies the default uri, which is picked up by uri() by default.
+   */
+  protected function defaultUri() {
+    return array('path' => 'postit/' . $this->pid);
+  }  
+  
+}
+
+/**
+ * The controller class used for postit entities.
+ */
+class PostItController extends EntityAPIController {
+  
+  public function __construct($entityType) {
+    parent::__construct($entityType);
+  }
+  
+  /**
+   * Create a postit - First setup the values that are the specific to the 
+   * postit schema, then go through the parent imlplementation.
+   */
+  public function create(array $values = array()) {
+    // Add values that are specific to our Postit
+    $values += array(
+      'pid' => '',
+      'note' => '',
+      'is_new' => TRUE,
+      'title' => '',
+    );
+    $postit = parent::create($values);
+    return $postit;    
+  }
+  
+  /**
+   * Override the buildContent function to add entity specific fields.
+   */
+  public function buildContent($entity, $view_mode = 'full', $langcode = NULL, $content = array()) {
+    // Let the parent class build it's field content first.
+    $content = parent::buildContent($entity, $view_mode, $langcode, $content);
+    // We show our internal note field using a theming function from the FIELD
+    // API, so the behaviour will be the same as other fields added with the 
+    // FIELD API.
+    $content['note'] = array(
+      '#theme' => 'field',
+      '#weight' => -40,
+      '#title' => t('Note'),
+      '#label_display' => 'hidden',
+      '#access' => TRUE,
+      '#view_mode' => 'full',
+      '#language' => LANGUAGE_NONE,
+      '#field_name' => 'field_primary_note',
+      '#field_type' => 'text',
+      '#entity_type' => 'postit',
+      '#bundle' => 'postit',
+      '#items' => array(array('value' => $entity->note)),
+      '#formatter' => 'text_default',
+       0 => array('#markup' => check_plain($entity->note)),
+    );
+    return $content;
+  }
+  
+}
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 

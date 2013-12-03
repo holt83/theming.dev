@@ -1,0 +1,10 @@
+<?php
+
+/**
+ * Implements hook_ctools_plugin_directory().
+ */
+function sum_ctools_plugin_directory($module, $plugin) {
+  if ($module == 'calculation_plugins' && $plugin == 'operation') {
+    return 'plugins/operation';
+  }
+}
